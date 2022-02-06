@@ -56,5 +56,5 @@ create table positions (
 
 --добавим должность и уровень доступа
 alter table workers add columns (
-	
+	position int references positions(position_id)
 )
