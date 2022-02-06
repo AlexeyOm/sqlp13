@@ -44,17 +44,43 @@ create table payments(
 	payment_date timestamp default now()
 );
 
---св€жем платежи с расходами
-alter table payments add column
-	expense_id int references expenses(expense_id);
+--------------------------------------------
+
 
 --добавим таблицу с должност€ми
 create table positions (
 	position_id serial primary key,
-	position_name text not null,
+	position_name text not null
+)
+
+--добавим таблицу с уровн€ми доступа к данным
+create table access_levels (
+	level_id serial primary key,
+	level_name text not null,
+	finance_data bool, --все финансы
+	logistic_data bool, --данные по адресам
+	sales_data bool, --данные дл€ продажи
+	purchase_data bool --данные дл€ работы с поставщиками
 )
 
 --добавим должность и уровень доступа
-alter table workers add columns (
-	position int references positions(position_id)
-)
+alter table workers add column 
+	position int references positions(position_id);
+
+alter table workers add column
+	access_level int references access_levels(level_id);
+
+--добавим таблицу с адресами
+--не будем использовать  Ћјƒ–, потому что € так вижу. цветочный магазин небольшой, доставка работает в пределах одного города
+create table addresses (
+	address_id serial primary key,
+	street text not null,
+	house_num text not null, -- корпуса, дроби, буквы, всЄ в текст
+	room_num text, -- номер помещени€
+	store int, --этаж
+	notes text --примечани€ по адресу
+);
+
+alter table workers 
+	alter column address type int using address::integer;
+
