@@ -52,7 +52,6 @@ alter table payments add column
 create table positions (
 	position_id serial primary key,
 	position_name text not null,
-	position_
 )
 
 --добавим должность и уровень доступа
