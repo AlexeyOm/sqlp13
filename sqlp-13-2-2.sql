@@ -81,6 +81,86 @@ create table addresses (
 	notes text --примечания по адресу
 );
 
+
+--меняем тип столбца, будет не адрес, а ссылка на адрес
 alter table workers 
 	alter column address type int using address::integer;
+alter table workers
+	add constraint fk_address foreign key(address) references addresses(address_id);
+
+
+-- создадим таблицу - корзину, в которой будем хранить количество заказанных продуктов с привязкой к номеру заказа
+
+
+create table carts (
+	cart_id serial primary key,
+	order_id int references orders(order_id),
+	product_id int references products(product_id),
+	amount int check (amount > 0),
+	price numeric(5,2)
+);
+	
+-- удалим странный неатомарный столбец order_products из таблицы orders, будем использовать внешний ключ таблицы carts
+
+--свяжем заказы с адресами
+alter table orders 
+	drop column order_address;
+alter table orders 
+	add column address_id int references addresses(address_id);
+
+alter table workers
+	add constraint fk_address foreign key(address) references addresses(address_id);
+	
+
+--добавим столбец с ценой продуктам
+alter table products 
+	add column product_price numeric(6,2);
+
+--создадим таблицу пользователей интернет-магазина
+create table customers (
+	customer_id serial primary key,
+	login text not null unique,
+	pass text not null
+);
+
+--свяжем заказы и пользователей
+alter table orders 
+	add column customer_id int references customers(customer_id);
+
+--свяжем заказы поставщикам и продукты, заказы и расходы, поправим таблицу заказов поставщикам
+alter table purchases 
+	drop column purchase_name;
+alter table purchases 
+	drop column purchase_color;
+alter table purchases 
+	drop column purchase_count;
+
+alter table purchases 
+	add column purchase_price numeric(6,2);
+alter table purchases 
+	add column product_id int references products(product_id);
+
+alter table purchases 
+	add column expense_id int references expenses(expense_id);
+
+--свяжем платежи и расходы
+alter table payments 
+	add column expense_id int references expenses(expense_id);
+
+--создадим таблицу с платежами по заказам покупателей
+create table customer_payments (
+	customer_payment_id serial primary key,
+	order_id int references orders(order_id),
+	amount numeric(6,2),
+	payment_date timestamp
+);
+
+------------
+create extension postgres_fdw;
+
+create server remote_flowers
+foreign data wrapper postgres_fdw
+options 
+
+
 
