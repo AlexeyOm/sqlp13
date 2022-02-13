@@ -1,5 +1,7 @@
 set search_path to flower_power;
 
+-- запросы из лекции
+
 create table products(
 	product_id serial primary key,
 	product_name varchar(50) not null unique,
@@ -45,7 +47,7 @@ create table payments(
 );
 
 --------------------------------------------
-
+--ДЗ
 
 --добавим таблицу с должностями
 create table positions (
@@ -156,11 +158,50 @@ create table customer_payments (
 );
 
 ------------
+
+--вертикально шардируем
+
+drop table carts;
+
+create table carts (
+	cart_id int,
+	order_id int,
+	product_id int,
+	amount int check (amount > 0),
+	price numeric(5,2)
+)
+partition by range(cart_id);
+
+create table carts_100000
+    partition of carts
+    for values from (0) TO (99999);
+
+
 create extension postgres_fdw;
+
+drop server remote_flowers cascade;
 
 create server remote_flowers
 foreign data wrapper postgres_fdw
-options 
+options (host '84.201.163.203', port '19001', dbname 'workplace');
+
+create user mapping for postgres
+server remote_flowers
+options (user 'netology', password 'NetoSQL2019');
 
 
+drop foreign table carts_200000;
 
+create foreign table carts_200000
+	partition of carts
+	for values from (100000) TO (199999)
+	server remote_flowers
+	options  (schema_name 'omelchenko', table_name 'carts_200000');
+
+insert into carts (cart_id, order_id, product_id, amount, price)
+values (1, 3, 55, 13, 23.8);
+
+select * from carts;
+
+insert into carts (cart_id, order_id, product_id, amount, price)
+values ((select max(cart_id)+1 from carts), 3, 55, 13, 23.8);
